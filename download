@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+"""
+Yet another script of mine.
+
+Usage: {script} [options] [ID]
+
+Arguments:
+    ID - Id of the game.
+
+Options:
+    -h, --help
+        Show this screen and exit.
+"""
+import sys
+from contextlib import suppress
+from pathlib import Path
+
+from bs4 import BeautifulSoup
+from requests import get
+
+LINK = "https://www.steamcardexchange.net/index.php?gamepage-appid-ID/"
+
+
+def main(script_name: str, *script_args: str):
+    doc = __doc__.format(script=Path(script_name).name)
+    args = __import__("docopt").docopt(doc, script_args)
+    if args["ID"]:
+        if args["ID"] == "-":
+            for line in sys.stdin.readlines():
+                for id in line.split():
+                    download_game_wallpapers(int(id))
+        else:
+            download_game_wallpapers(int(args["ID"]))
+    else:
+        games = set()
+        for user in (Path.home() / ".steam/steam/userdata/").iterdir():
+            for game in user.iterdir():
+                with suppress(ValueError):
+                    games.add(int(game.stem))
+        for game in games:
+            download_game_wallpapers(game)
+
+
+def download_game_wallpapers(id: int):
+    page = BeautifulSoup(get(LINK.replace("ID", str(id))).text, features="html.parser")
+    game_title = page.title.text.split(" :: ")[-1]
+    print(game_title)
+    for link in page.select("a"):
+        if link.text == "Wallpaper":
+            name = list(link.parent.parent.children)[5].text
+            print("\t" + name)
+            path = Path(game_title + " - " + name + ".jpg")
+            if not path.is_file():
+                path.write_bytes(get(link["href"]).content)
+
+
+if __name__ == "__main__":
+    with suppress(KeyboardInterrupt):
+        main(sys.argv[0], *sys.argv[1:])
