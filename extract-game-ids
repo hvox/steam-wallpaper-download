@@ -1,0 +1,32 @@
+#!/usr/bin/env python3
+"""
+Yet another script of mine.
+
+Usage: {script} [options] PATH
+
+Arguments:
+    PATH - Path to the XML file with list of games.
+
+Options:
+    -h, --help
+        Show this screen and exit.
+"""
+import sys
+from contextlib import suppress
+from pathlib import Path
+
+
+def main(script_name: str, *script_args: str):
+    doc = __doc__.format(script=Path(script_name).name)
+    args = __import__("docopt").docopt(doc, script_args)
+    game_ids = set()
+    for line in Path(args["PATH"]).read_text().splitlines():
+        if line.strip().startswith("<appID>"):
+            game_id = line.split(">")[1].split("<")[0]
+            game_ids.add(game_id)
+    print(" ".join(game_ids))
+
+
+if __name__ == "__main__":
+    with suppress(KeyboardInterrupt):
+        main(sys.argv[0], *sys.argv[1:])
