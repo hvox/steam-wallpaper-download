@@ -49,7 +49,7 @@ def download_game_wallpapers(id: int):
         if link.text == "Wallpaper":
             name = list(link.parent.parent.children)[5].text
             print("\t" + name)
-            path = Path(game_title + " - " + name + ".jpg")
+            path = Path(game_title + " - " + name.replace("/", "∕") + ".jpg")
             if not path.is_file():
                 path.write_bytes(get(link["href"]).content)
 
